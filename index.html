@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sticker Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="2026 World Cup sticker album tracker — tap a sticker when you collect it.">
+<meta name="theme-color" content="#0a0a0c">
+<meta name="color-scheme" content="dark">
+<!-- iOS home-screen web app -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Stickers">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+<style>
+:root{
+  --bg:#0a0a0c;
+  --surface:#131317;
+  --surface-2:#1b1b21;
+  --surface-3:#25252d;
+  --border:rgba(255,255,255,.08);
+  --border-strong:rgba(255,255,255,.14);
+  --text:#f5f5f7;
+  --muted:rgba(245,245,247,.56);
+  --faint:rgba(245,245,247,.32);
+  --accent:#3fd98b;
+  --accent-soft:rgba(63,217,139,.13);
+  --accent-line:rgba(63,217,139,.38);
+  --danger:#ff5f57;
+  --radius:18px;
+  --radius-sm:13px;
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 8px 24px rgba(0,0,0,.35);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",Inter,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg);color-scheme:dark;-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);font-family:var(--font);
+  font-size:16px;line-height:1.35;overflow-x:hidden;overscroll-behavior-y:none;
+  -webkit-font-smoothing:antialiased;touch-action:manipulation;
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0;margin:0}
+.hidden{display:none!important}
+
+/* ---------- header ---------- */
+.header{
+  position:sticky;top:0;z-index:20;
+  background:rgba(10,10,12,.9);
+  -webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);
+  border-bottom:1px solid var(--border);
+  padding:calc(var(--safe-top) + 10px) 16px 12px;
+}
+.header-inner{max-width:760px;margin:0 auto}
+.brand{display:grid;grid-template-rows:1fr;transition:grid-template-rows .28s ease,opacity .2s ease,margin .28s ease;margin-bottom:10px}
+.brand>div{overflow:hidden;min-height:0}
+.brand-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.scrolled .brand{grid-template-rows:0fr;opacity:0;margin-bottom:0}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0}
+.title{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:2px 0 0;line-height:1.05}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+  background:var(--surface-2);border:1px solid var(--border);color:var(--muted);flex:none;
+  transition:transform .12s ease,background .15s ease;
+}
+.icon-btn:active{transform:scale(.92);background:var(--surface-3)}
+.icon-btn svg{width:18px;height:18px}
+
+.stats{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.stat-main{display:flex;align-items:baseline;gap:8px}
+.stat-main .num{font-size:30px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.stat-main .num small{font-size:18px;color:var(--muted);font-weight:700;letter-spacing:-.01em}
+.stat-main .lbl{font-size:13px;color:var(--muted);font-weight:600}
+.stat-side{text-align:right;font-variant-numeric:tabular-nums}
+.stat-side .pct{font-size:20px;font-weight:800;letter-spacing:-.02em;color:var(--accent);line-height:1}
+.stat-side .rem{font-size:12px;color:var(--muted);font-weight:600;margin-top:3px;white-space:nowrap}
+.stat-side .rem b{color:var(--text);font-weight:700}
+.scrolled .stat-main .num{font-size:24px}
+.scrolled .stat-side .pct{font-size:17px}
+
+.bar{height:6px;border-radius:99px;background:var(--surface-3);overflow:hidden;margin:10px 0 10px}
+.bar>i{display:block;height:100%;width:0;border-radius:99px;background:var(--accent);transition:width .45s cubic-bezier(.22,1,.36,1)}
+.substat{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:600;margin:-4px 0 10px;font-variant-numeric:tabular-nums}
+.scrolled .substat{display:none}
+
+.controls{display:flex;gap:8px;align-items:center}
+.controls+.controls{margin-top:8px}
+.seg{display:flex;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:3px}
+.seg button{
+  flex:1;padding:0 8px;height:36px;border-radius:9px;font-size:13px;font-weight:700;color:var(--muted);
+  transition:background .18s ease,color .18s ease;position:relative;
+}
+.seg button.active{background:var(--surface-3);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.35)}
+.seg button i{font-style:normal;font-size:11px;color:var(--faint);margin-left:4px;font-variant-numeric:tabular-nums}
+.seg button.active i{color:var(--muted)}
+.search{flex:1;min-width:0;position:relative}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--faint);pointer-events:none}
+.search input{
+  width:100%;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);
+  padding:0 34px 0 32px;font-size:16px;font-weight:600;outline:none;-webkit-appearance:none;appearance:none;
+  letter-spacing:.02em;transition:border-color .15s ease;
+}
+.search input::placeholder{color:var(--faint);font-weight:500;letter-spacing:0}
+.search input:focus{border-color:var(--border-strong)}
+.search input::-webkit-search-cancel-button{display:none}
+.search .clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--muted)}
+.search .clear svg{position:static;transform:none;width:12px;height:12px;color:currentColor}
+.sort{position:relative;flex:none}
+.sort select{
+  -webkit-appearance:none;appearance:none;height:40px;width:40px;border-radius:12px;border:1px solid var(--border);
+  background:var(--surface-2);color:transparent;padding:0;outline:none;
+}
+.sort select option{color:#111}
+.sort svg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:17px;height:17px;color:var(--muted);pointer-events:none}
+.sort.non-default svg{color:var(--accent)}
+
+/* ---------- content ---------- */
+.main{max-width:760px;margin:0 auto;padding:14px 16px calc(var(--safe-bottom) + 96px)}
+.recent{margin-bottom:14px}
+.recent-head{display:flex;justify-content:space-between;align-items:center;margin:0 4px 8px}
+.recent-head h2{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0}
+.recent-list{display:flex;flex-wrap:wrap;gap:6px}
+.recent-list span{
+  display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:9px;
+  background:var(--accent-soft);border:1px solid var(--accent-line);font-size:12.5px;font-weight:700;letter-spacing:.02em;
+  color:var(--text);font-variant-numeric:tabular-nums;animation:fadein .25s ease;
+}
+.recent-list span em{font-style:normal;font-size:13px}
+
+.sort-label{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:0 4px 8px;display:flex;justify-content:space-between}
+
+.team{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:12px 12px 12px;margin-bottom:10px;box-shadow:var(--shadow);
+  transition:opacity .28s ease,transform .28s ease,border-color .3s ease;
+  animation:rise .3s ease both;
+}
+.team.leave{opacity:0;transform:scale(.98)}
+.team-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:0 2px}
+.flag{
+  width:36px;height:36px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);
+  display:grid;place-items:center;font-size:22px;line-height:1;flex:none;overflow:hidden;
+}
+.flag.mono{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--muted)}
+.team-name{flex:1;min-width:0}
+.team-name h3{margin:0;font-size:15px;font-weight:800;letter-spacing:.01em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-name h3 span{color:var(--faint);font-weight:700;margin-left:6px;letter-spacing:.06em}
+.team-name .mini{height:3px;border-radius:99px;background:var(--surface-3);margin-top:6px;overflow:hidden;width:min(100%,160px)}
+.team-name .mini i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .4s cubic-bezier(.22,1,.36,1)}
+.team-count{text-align:right;font-variant-numeric:tabular-nums;flex:none}
+.team-count b{display:block;font-size:15px;font-weight:800;letter-spacing:-.01em}
+.team-count small{font-size:11.5px;color:var(--muted);font-weight:600}
+.team.complete{border-color:var(--accent-line)}
+.team.complete .flag{border-color:var(--accent-line)}
+.team.complete .team-name h3{color:var(--muted)}
+.done-badge{
+  display:none;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:8px;
+  background:var(--accent-soft);color:var(--accent);font-size:10.5px;font-weight:800;letter-spacing:.14em;
+  text-transform:uppercase;animation:fadein .3s ease;
+}
+.done-badge svg{width:11px;height:11px}
+.team.complete .done-badge{display:inline-flex}
+.team.complete .team-count{display:none}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:8px}
+@media (min-width:600px){.grid{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))}}
+.chip{
+  position:relative;height:52px;border-radius:var(--radius-sm);
+  background:var(--surface-2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:800;letter-spacing:.03em;font-variant-numeric:tabular-nums;
+  color:var(--text);user-select:none;-webkit-user-select:none;
+  transition:transform .14s ease,background .2s ease,border-color .2s ease,color .2s ease,opacity .22s ease;
+  will-change:transform;
+}
+.chip.wide{grid-column:1/-1;font-size:14px;letter-spacing:.01em}
+.chip:active{transform:scale(.93)}
+.chip .id{position:relative;z-index:1;transition:opacity .2s ease}
+.chip .id::after{
+  content:"";position:absolute;left:-3px;right:-3px;top:50%;height:2px;background:currentColor;border-radius:2px;
+  transform:scaleX(0);transform-origin:left center;transition:transform .22s cubic-bezier(.22,1,.36,1);opacity:.75;
+}
+.chip .check{
+  position:absolute;top:5px;right:5px;width:16px;height:16px;border-radius:50%;background:var(--accent);
+  display:grid;place-items:center;transform:scale(0);opacity:0;
+  transition:transform .28s cubic-bezier(.34,1.56,.64,1),opacity .18s ease;
+}
+.chip .check svg{width:9px;height:9px;color:#06120b}
+.chip.on{background:var(--accent-soft);border-color:var(--accent-line);color:var(--muted)}
+.chip.on .id{opacity:.8}
+.chip.on .id::after{transform:scaleX(1)}
+.chip.on .check{transform:scale(1);opacity:1}
+.chip.pop{animation:pop .38s cubic-bezier(.34,1.56,.64,1)}
+.chip.leave{opacity:0;transform:scale(.8);pointer-events:none}
+@keyframes pop{0%{transform:scale(.9)}55%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+.empty{text-align:center;padding:56px 20px;color:var(--muted);animation:rise .3s ease}
+.empty .big{font-size:40px;margin-bottom:10px}
+.empty h4{margin:0 0 6px;color:var(--text);font-size:17px;font-weight:800;letter-spacing:-.01em}
+.empty p{margin:0;font-size:14px}
+.link-btn{margin-top:14px;height:38px;padding:0 16px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);font-size:13.5px;font-weight:700;color:var(--text)}
+.link-btn:active{background:var(--surface-3)}
+
+/* ---------- toast ---------- */
+.toast{
+  position:fixed;left:50%;bottom:calc(var(--safe-bottom) + 18px);transform:translate(-50%,20px);
+  z-index:40;opacity:0;pointer-events:none;
+  display:flex;align-items:center;gap:14px;height:48px;padding:0 6px 0 16px;border-radius:14px;
+  background:#26262e;border:1px solid var(--border-strong);box-shadow:0 12px 32px rgba(0,0,0,.5);
+  font-size:14px;font-weight:600;white-space:nowrap;max-width:calc(100vw - 32px);
+  transition:transform .28s cubic-bezier(.22,1,.36,1),opacity .2s ease;
+}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast b{font-weight:800;letter-spacing:.02em}
+.toast .undo{height:36px;padding:0 14px;border-radius:10px;background:var(--surface-3);color:var(--accent);font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+.toast .undo:active{background:#33333d}
+
+/* ---------- sheet / modal ---------- */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;opacity:0;transition:opacity .22s ease;pointer-events:none;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.backdrop.show{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--surface);
+  border-radius:22px 22px 0 0;border-top:1px solid var(--border-strong);
+  padding:12px 16px calc(var(--safe-bottom) + 18px);transform:translateY(105%);
+  transition:transform .32s cubic-bezier(.22,1,.36,1);max-width:640px;margin:0 auto;
+}
+.sheet.show{transform:none}
+.grabber{width:38px;height:4px;border-radius:99px;background:var(--surface-3);margin:0 auto 14px}
+.sheet h2{font-size:17px;font-weight:800;margin:0 0 4px;letter-spacing:-.01em}
+.sheet .sub{font-size:13px;color:var(--muted);margin:0 0 16px}
+.menu{display:flex;flex-direction:column;gap:8px}
+.menu button{
+  display:flex;align-items:center;gap:12px;height:52px;padding:0 14px;border-radius:14px;
+  background:var(--surface-2);border:1px solid var(--border);text-align:left;font-size:15px;font-weight:700;
+  transition:background .15s ease,transform .12s ease;
+}
+.menu button:active{transform:scale(.985);background:var(--surface-3)}
+.menu button svg{width:18px;height:18px;color:var(--muted);flex:none}
+.menu button span{flex:1}
+.menu button small{font-size:12px;color:var(--faint);font-weight:600}
+.menu button.danger{color:var(--danger)}
+.menu button.danger svg{color:var(--danger)}
+.sheet-foot{margin:16px 4px 0;font-size:11.5px;color:var(--faint);font-weight:600;display:flex;justify-content:space-between;font-variant-numeric:tabular-nums}
+
+.modal{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);z-index:70;
+  width:min(calc(100vw - 48px),360px);background:var(--surface);border:1px solid var(--border-strong);
+  border-radius:20px;padding:22px 20px 16px;opacity:0;pointer-events:none;box-shadow:0 24px 60px rgba(0,0,0,.6);
+  transition:opacity .2s ease,transform .22s cubic-bezier(.22,1,.36,1);text-align:center;
+}
+.modal.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%)}
+.modal h3{margin:0 0 6px;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.modal p{margin:0 0 18px;font-size:14px;color:var(--muted);line-height:1.45}
+.modal .row{display:flex;gap:8px}
+.modal .row button{flex:1;height:46px;border-radius:13px;font-size:15px;font-weight:700;background:var(--surface-2);border:1px solid var(--border)}
+.modal .row button.primary{background:var(--text);color:#0a0a0c;border-color:transparent}
+.modal .row button.danger{background:var(--danger);color:#fff;border-color:transparent}
+.modal .row button:active{filter:brightness(.9)}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="header" id="header">
+  <div class="header-inner">
+    <div class="brand"><div>
+      <div class="brand-row">
+        <div>
+          <p class="eyebrow">2026 World Cup</p>
+          <h1 class="title">Sticker Tracker</h1>
+        </div>
+        <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </button>
+      </div>
+    </div></div>
+
+    <div class="stats">
+      <div class="stat-main">
+        <div class="num"><span id="sCollected">0</span> <small>/ <span id="sTotal">0</span></small></div>
+        <div class="lbl">Collected</div>
+      </div>
+      <div class="stat-side">
+        <div class="pct" id="sPct">0%</div>
+        <div class="rem"><b id="sRemaining">0</b> Remaining</div>
+      </div>
+    </div>
+    <div class="bar" role="progressbar" aria-label="Overall progress"><i id="sBar"></i></div>
+    <div class="substat">
+      <span id="sTeams">0 Teams Completed</span>
+      <span id="sTeamsTotal"></span>
+    </div>
+
+    <div class="controls">
+      <div class="seg" role="tablist" id="filters">
+        <button data-filter="missing" class="active">Missing<i id="fMissing"></i></button>
+        <button data-filter="collected">Collected<i id="fCollected"></i></button>
+        <button data-filter="all">All</button>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="search" type="search" placeholder="Search ARG7, BRA, Kimmich…" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="search" aria-label="Search stickers">
+        <button class="clear hidden" id="clearSearch" aria-label="Clear search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="sort" id="sortWrap">
+        <select id="sort" aria-label="Sort teams">
+          <option value="album">Album order</option>
+          <option value="remaining">Most stickers remaining</option>
+          <option value="closest">Closest to completion</option>
+          <option value="completed">Completed teams first</option>
+        </select>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M7 12h10M10 17h4"/></svg>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="main">
+  <div id="sentinel" style="height:1px;margin-top:-15px"></div>
+  <section class="recent hidden" id="recent">
+    <div class="recent-head"><h2>Recently collected</h2></div>
+    <div class="recent-list" id="recentList"></div>
+  </section>
+  <div class="sort-label hidden" id="sortLabel"></div>
+  <div id="list"></div>
+</main>
+
+<div class="toast" id="toast" role="status"><span id="toastMsg"></span><button class="undo" id="undoBtn">Undo</button></div>
+
+<div class="backdrop" id="backdrop"></div>
+<div class="sheet" id="sheet" role="dialog" aria-label="Settings">
+  <div class="grabber"></div>
+  <h2>Settings</h2>
+  <p class="sub">Your progress is saved on this device automatically.</p>
+  <div class="menu">
+    <button id="exportBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 17v3h16v-3"/></svg>
+      <span>Export backup</span><small>JSON</small>
+    </button>
+    <button id="copyBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+      <span>Copy backup to clipboard</span>
+    </button>
+    <button id="importBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5M4 17v3h16v-3"/></svg>
+      <span>Import backup</span><small>Restore</small>
+    </button>
+    <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+    <button id="resetBtn" class="danger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6"/></svg>
+      <span>Reset collection</span>
+    </button>
+  </div>
+  <div class="sheet-foot"><span id="footInfo"></span><span>v1.0</span></div>
+</div>
+
+<div class="modal" id="modal" role="alertdialog">
+  <h3 id="modalTitle"></h3>
+  <p id="modalText"></p>
+  <div class="row">
+    <button id="modalCancel">Cancel</button>
+    <button id="modalOk" class="danger">Reset</button>
+  </div>
+</div>
+
+<script>
+/* ==========================================================
+   DATA — the only stickers currently missing. IDs are exact.
+   ========================================================== */
+const TEAMS = [
+  { code:'00',  name:'Intro',        flag:null, ids:['00'] },
+  { code:'FWC', name:'Tournament',   flag:null, ids:['FWC6','FWC9','FWC10','FWC13','FWC14','FWC18'] },
+  { code:'MEX', name:'Mexico',       flag:'🇲🇽', ids:['MEX2','MEX11','MEX13'] },
+  { code:'RSA', name:'South Africa', flag:'🇿🇦', ids:['RSA3','RSA4','RSA11','RSA13','RSA16','RSA17','RSA18'] },
+  { code:'KOR', name:'South Korea',  flag:'🇰🇷', ids:['KOR5','KOR14'] },
+  { code:'CZE', name:'Czechia',      flag:'🇨🇿', ids:['CZE2','CZE9','CZE11','CZE13','CZE18','CZE20'] },
+  { code:'CAN', name:'Canada',       flag:'🇨🇦', ids:['CAN2','CAN3','CAN4','CAN6','CAN12','CAN13','CAN16','CAN19','CAN20'] },
+  { code:'BIH', name:'Bosnia & Herzegovina', flag:'🇧🇦', ids:['BIH2','BIH4','BIH5','BIH9','BIH14','BIH15','BIH19'] },
+  { code:'QAT', name:'Qatar',        flag:'🇶🇦', ids:['QAT8','QAT9','QAT15'] },
+  { code:'SUI', name:'Switzerland',  flag:'🇨🇭', ids:['SUI5','SUI9','SUI11','SUI12','SUI17'] },
+  { code:'BRA', name:'Brazil',       flag:'🇧🇷', ids:['BRA11','BRA13','BRA19'] },
+  { code:'MAR', name:'Morocco',      flag:'🇲🇦', ids:['MAR4','MAR6','MAR15','MAR19'] },
+  { code:'HAI', name:'Haiti',        flag:'🇭🇹', ids:['HAI4','HAI13','HAI14','HAI19'] },
+  { code:'SCO', name:'Scotland',     flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', ids:['SCO3','SCO10','SCO11','SCO12','SCO13','SCO15','SCO19'] },
+  { code:'USA', name:'United States',flag:'🇺🇸', ids:['USA4','USA6','USA12','USA19','USA20'] },
+  { code:'PAR', name:'Paraguay',     flag:'🇵🇾', ids:['PAR4','PAR9','PAR13','PAR14','PAR19'] },
+  { code:'AUS', name:'Australia',    flag:'🇦🇺', ids:['AUS4','AUS5','AUS8','AUS11','AUS17','AUS19'] },
+  { code:'TUR', name:'Türkiye',      flag:'🇹🇷', ids:['TUR1','TUR8','TUR10','TUR12','TUR20'] },
+  { code:'GER', name:'Germany',      flag:'🇩🇪', ids:['GER1','GER2','GER9','GER12','GER20'] },
+  { code:'CUW', name:'Curaçao',      flag:'🇨🇼', ids:['CUW1','CUW3','CUW12','CUW14','CUW19'] },
+  { code:'CIV', name:"Côte d'Ivoire",flag:'🇨🇮', ids:['CIV7','CIV9','CIV12','CIV14','CIV19'] },
+  { code:'ECU', name:'Ecuador',      flag:'🇪🇨', ids:['ECU11','ECU17'] },
+  { code:'NED', name:'Netherlands',  flag:'🇳🇱', ids:['NED4','NED11','NED15','NED18'] },
+  { code:'JPN', name:'Japan',        flag:'🇯🇵', ids:['JPN3','JPN5','JPN7'] },
+  { code:'SWE', name:'Sweden',       flag:'🇸🇪', ids:['SWE7','SWE11','SWE15','SWE20'] },
+  { code:'TUN', name:'Tunisia',      flag:'🇹🇳', ids:['TUN7','TUN8','TUN10','TUN12','TUN15','TUN18','TUN19'] },
+  { code:'BEL', name:'Belgium',      flag:'🇧🇪', ids:['BEL5','BEL7','BEL14','BEL19'] },
+  { code:'EGY', name:'Egypt',        flag:'🇪🇬', ids:['EGY4','EGY8','EGY11','EGY13','EGY18'] },
+  { code:'IRN', name:'Iran',         flag:'🇮🇷', ids:['IRN6','IRN9','IRN10','IRN17','IRN18','IRN20'] },
+  { code:'NZL', name:'New Zealand',  flag:'🇳🇿', ids:['NZL1','NZL6','NZL19'] },
+  { code:'ESP', name:'Spain',        flag:'🇪🇸', ids:['ESP9','ESP10','ESP12','ESP13','ESP16','ESP17','ESP19'] },
+  { code:'CPV', name:'Cape Verde',   flag:'🇨🇻', ids:['CPV6','CPV10','CPV13','CPV15','CPV19','CPV20'] },
+  { code:'KSA', name:'Saudi Arabia', flag:'🇸🇦', ids:['KSA5','KSA7','KSA8','KSA11','KSA18'] },
+  { code:'URU', name:'Uruguay',      flag:'🇺🇾', ids:['URU2','URU6'] },
+  { code:'FRA', name:'France',       flag:'🇫🇷', ids:['FRA1','FRA2','FRA7','FRA10','FRA17','FRA18','FRA20'] },
+  { code:'SEN', name:'Senegal',      flag:'🇸🇳', ids:['SEN3','SEN4','SEN7','SEN8','SEN9','SEN13','SEN14','SEN15'] },
+  { code:'IRQ', name:'Iraq',         flag:'🇮🇶', ids:['IRQ2','IRQ5','IRQ7','IRQ11','IRQ12','IRQ13'] },
+  { code:'NOR', name:'Norway',       flag:'🇳🇴', ids:['NOR14','NOR15','NOR19','NOR20'] },
+  { code:'ARG', name:'Argentina',    flag:'🇦🇷', ids:['ARG1','ARG3','ARG7','ARG16'] },
+  { code:'ALG', name:'Algeria',      flag:'🇩🇿', ids:['ALG1','ALG2','ALG5','ALG7','ALG8','ALG10','ALG11','ALG15','ALG18','ALG20'] },
+  { code:'AUT', name:'Austria',      flag:'🇦🇹', ids:['AUT1','AUT4','AUT11','AUT17'] },
+  { code:'JOR', name:'Jordan',       flag:'🇯🇴', ids:['JOR2','JOR3','JOR4','JOR5','JOR6','JOR7','JOR11','JOR13','JOR20'] },
+  { code:'POR', name:'Portugal',     flag:'🇵🇹', ids:['POR1','POR6','POR12'] },
+  { code:'COD', name:'DR Congo',     flag:'🇨🇩', ids:['COD1','COD3','COD6','COD9','COD13','COD14','COD19'] },
+  { code:'UZB', name:'Uzbekistan',   flag:'🇺🇿', ids:['UZB8','UZB9','UZB12','UZB19','UZB20'] },
+  { code:'COL', name:'Colombia',     flag:'🇨🇴', ids:['COL5','COL6','COL10'] },
+  { code:'ENG', name:'England',      flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', ids:['ENG3','ENG5','ENG12','ENG16'] },
+  { code:'CRO', name:'Croatia',      flag:'🇭🇷', ids:['CRO1','CRO2','CRO4','CRO7','CRO12','CRO15','CRO16','CRO19','CRO20'] },
+  { code:'GHA', name:'Ghana',        flag:'🇬🇭', ids:['GHA2','GHA5','GHA6','GHA10'] },
+  { code:'PAN', name:'Panama',       flag:'🇵🇦', ids:['PAN1','PAN3','PAN12','PAN20'] },
+  { code:'CC',  name:'Coca-Cola Special', flag:null, ids:['Coca-Cola 3 — Kimmich'] },
+];
+
+/* ---------- derived lookups ---------- */
+const STICKERS = [];           // [{id, team}]
+const TEAM_OF = new Map();     // id -> team
+TEAMS.forEach((t, i) => { t.index = i; t.ids.forEach(id => { STICKERS.push({ id, team: t }); TEAM_OF.set(id, t); }); });
+const TOTAL = STICKERS.length;
+(function checkDuplicates(){
+  const seen = new Set(), dupes = [];
+  STICKERS.forEach(s => { if (seen.has(s.id)) dupes.push(s.id); seen.add(s.id); });
+  if (dupes.length) console.warn('Duplicate sticker IDs in dataset:', dupes);
+})();
+
+/* ---------- persistence ---------- */
+const KEY = 'wc26-sticker-tracker:v1';
+const state = { collected: {}, filter: 'missing', sort: 'album' };
+function load(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d && typeof d.collected === 'object') {
+      for (const id in d.collected) if (TEAM_OF.has(id)) state.collected[id] = d.collected[id];
+    }
+    if (['missing','collected','all'].includes(d.filter)) state.filter = d.filter;
+    if (['album','remaining','closest','completed'].includes(d.sort)) state.sort = d.sort;
+  } catch (e) { console.warn('Could not load saved progress', e); }
+}
+let saveTimer = null;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem(KEY, JSON.stringify({ version: 1, savedAt: Date.now(), collected: state.collected, filter: state.filter, sort: state.sort })); }
+    catch (e) { console.warn('Could not save progress', e); }
+  }, 60);
+}
+window.addEventListener('pagehide', () => { clearTimeout(saveTimer); try { localStorage.setItem(KEY, JSON.stringify({ version:1, savedAt:Date.now(), collected:state.collected, filter:state.filter, sort:state.sort })); } catch(e){} });
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const isOn = id => !!state.collected[id];
+const teamStats = t => { const c = t.ids.filter(isOn).length; return { total: t.ids.length, collected: c, remaining: t.ids.length - c, pct: c / t.ids.length, complete: c === t.ids.length }; };
+const norm = s => s.toLowerCase().replace(/[\s\-—_.]/g, '');
+function esc(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17 19 7"/></svg>';
+
+let query = '';
+function stickerVisible(id){
+  const on = isOn(id);
+  if (state.filter === 'missing' && on) return false;
+  if (state.filter === 'collected' && !on) return false;
+  return true;
+}
+function matchesQuery(id, team){
+  if (!query) return true;
+  if (norm(team.code).includes(query) || norm(team.name).includes(query)) return true;
+  return norm(id).includes(query);
+}
+function visibleIds(team){
+  return team.ids.filter(id => stickerVisible(id) && matchesQuery(id, team));
+}
+function sortedTeams(){
+  const arr = TEAMS.map(t => ({ t, s: teamStats(t) }));
+  const byAlbum = (a, b) => a.t.index - b.t.index;
+  switch (state.sort) {
+    case 'remaining': arr.sort((a, b) => b.s.remaining - a.s.remaining || byAlbum(a, b)); break;
+    case 'closest':   arr.sort((a, b) => (a.s.complete - b.s.complete) || (b.s.pct - a.s.pct) || (a.s.remaining - b.s.remaining) || byAlbum(a, b)); break;
+    case 'completed': arr.sort((a, b) => (b.s.complete - a.s.complete) || (b.s.pct - a.s.pct) || byAlbum(a, b)); break;
+    default: arr.sort(byAlbum);
+  }
+  return arr.map(x => x.t);
+}
+
+/* ---------- render: header stats ---------- */
+function updateStats(){
+  const collected = STICKERS.filter(s => isOn(s.id)).length;
+  const remaining = TOTAL - collected;
+  const pct = TOTAL ? Math.round(collected / TOTAL * 100) : 0;
+  const teamsDone = TEAMS.filter(t => teamStats(t).complete).length;
+  $('#sCollected').textContent = collected;
+  $('#sTotal').textContent = TOTAL;
+  $('#sRemaining').textContent = remaining;
+  $('#sPct').textContent = pct + '%';
+  $('#sBar').style.width = pct + '%';
+  $('#sTeams').textContent = `${teamsDone} ${teamsDone === 1 ? 'Team' : 'Teams'} Completed`;
+  $('#sTeamsTotal').textContent = `${TEAMS.length} teams · ${TOTAL} stickers on list`;
+  $('#fMissing').textContent = remaining;
+  $('#fCollected').textContent = collected;
+  $('#footInfo').textContent = `${collected} of ${TOTAL} collected`;
+  document.title = remaining ? `${remaining} left · Sticker Tracker` : 'Album complete · Sticker Tracker';
+}
+
+/* ---------- render: recently collected ---------- */
+function renderRecent(){
+  const recent = Object.entries(state.collected).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const box = $('#recent');
+  if (!recent.length || query) { box.classList.add('hidden'); return; }
+  box.classList.remove('hidden');
+  $('#recentList').innerHTML = recent.map(([id]) => {
+    const t = TEAM_OF.get(id);
+    return `<span>${t.flag ? `<em>${t.flag}</em>` : ''}${esc(id)}</span>`;
+  }).join('');
+}
+
+/* ---------- render: team cards ---------- */
+function teamCardHTML(t){
+  const s = teamStats(t);
+  const ids = visibleIds(t);
+  const flag = t.flag ? `<div class="flag">${t.flag}</div>` : `<div class="flag mono">${esc(t.code)}</div>`;
+  return `<section class="team${s.complete ? ' complete' : ''}" data-team="${esc(t.code)}">
+    <div class="team-head">
+      ${flag}
+      <div class="team-name">
+        <h3>${esc(t.name)}<span>${esc(t.code)}</span></h3>
+        <div class="mini"><i style="width:${s.pct * 100}%"></i></div>
+      </div>
+      <div class="done-badge">${CHECK_SVG}Complete</div>
+      <div class="team-count"><b><span class="tc">${s.collected}</span> / ${s.total}</b><small><span class="tp">${Math.round(s.pct * 100)}</span>%</small></div>
+    </div>
+    <div class="grid">${ids.map(chipHTML).join('')}</div>
+  </section>`;
+}
+function chipHTML(id){
+  const wide = id.length > 8;
+  return `<button class="chip${isOn(id) ? ' on' : ''}${wide ? ' wide' : ''}" data-id="${esc(id)}" aria-pressed="${isOn(id)}"><span class="id">${esc(id)}</span><span class="check">${CHECK_SVG}</span></button>`;
+}
+function render(){
+  updateStats();
+  renderRecent();
+  const teams = sortedTeams().filter(t => visibleIds(t).length > 0);
+  const list = $('#list');
+  const label = $('#sortLabel');
+  const sortNames = { remaining: 'Most remaining first', closest: 'Closest to completion', completed: 'Completed teams first' };
+  if (state.sort !== 'album' && teams.length) { label.classList.remove('hidden'); label.innerHTML = `<span>${sortNames[state.sort]}</span><span>${teams.length} teams</span>`; }
+  else label.classList.add('hidden');
+
+  if (!teams.length) {
+    let msg;
+    if (query) msg = `<div class="empty"><div class="big">🔍</div><h4>No matches</h4><p>Nothing in the <b>${state.filter}</b> view matches “${esc(query.toUpperCase())}”.</p>${state.filter !== 'all' ? '<button class="link-btn" id="showAll">Search all stickers</button>' : ''}</div>`;
+    else if (state.filter === 'missing') msg = `<div class="empty"><div class="big">🏆</div><h4>Album complete</h4><p>Every sticker on your list is collected.</p></div>`;
+    else msg = `<div class="empty"><div class="big">📒</div><h4>Nothing collected yet</h4><p>Tap a sticker in the Missing view when you get it.</p></div>`;
+    list.innerHTML = msg;
+    return;
+  }
+  list.innerHTML = teams.map(teamCardHTML).join('');
+}
+function refreshCard(code){
+  const card = document.querySelector(`.team[data-team="${CSS.escape(code)}"]`);
+  if (!card) return;
+  const t = TEAMS.find(x => x.code === code), s = teamStats(t);
+  card.classList.toggle('complete', s.complete);
+  card.querySelector('.tc').textContent = s.collected;
+  card.querySelector('.tp').textContent = Math.round(s.pct * 100);
+  card.querySelector('.mini i').style.width = (s.pct * 100) + '%';
+}
+
+/* ---------- interaction: toggle a sticker ---------- */
+let lastAction = null, toastTimer = null;
+function toggle(id, opts = {}){
+  const t = TEAM_OF.get(id); if (!t) return;
+  const wasOn = isOn(id);
+  if (wasOn) delete state.collected[id]; else state.collected[id] = Date.now();
+  save();
+  updateStats();
+  refreshCard(t.code);
+
+  const chip = document.querySelector(`.chip[data-id="${CSS.escape(id)}"]`);
+  if (chip) {
+    chip.classList.toggle('on', !wasOn);
+    chip.setAttribute('aria-pressed', String(!wasOn));
+    chip.classList.remove('pop'); void chip.offsetWidth; chip.classList.add('pop');
+  }
+  if (!opts.silent) showToast(id, !wasOn);
+
+  // Let the sticker (and a finished team) leave the current view gracefully.
+  const stillVisible = stickerVisible(id);
+  const card = chip && chip.closest('.team');
+  const teamNowComplete = teamStats(t).complete;
+  if (!stillVisible) {
+    const cardShouldLeave = card && visibleIds(t).length === 0;
+    if (cardShouldLeave && teamNowComplete && state.filter === 'missing') {
+      setTimeout(() => card && card.classList.add('leave'), 900);
+      setTimeout(render, 1200);
+    } else {
+      setTimeout(() => chip && chip.classList.add('leave'), 380);
+      if (cardShouldLeave) setTimeout(() => card && card.classList.add('leave'), 480);
+      setTimeout(render, 640);
+    }
+  } else {
+    renderRecent();
+  }
+}
+function showToast(id, collected){
+  lastAction = { id, collected };
+  $('#undoBtn').classList.remove('hidden');
+  $('#toastMsg').innerHTML = `<b>${esc(id)}</b>&nbsp; ${collected ? 'collected' : 'marked missing'}`;
+  const toast = $('#toast');
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 4200);
+}
+$('#undoBtn').addEventListener('click', () => {
+  if (!lastAction) return;
+  const { id, collected } = lastAction;
+  lastAction = null;
+  $('#toast').classList.remove('show');
+  if (isOn(id) === collected) toggle(id, { silent: true });
+  render();
+});
+
+$('#list').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if (chip) { toggle(chip.dataset.id); return; }
+  if (e.target.id === 'showAll') { setFilter('all'); }
+});
+
+/* ---------- filters / search / sort ---------- */
+function setFilter(f){
+  state.filter = f; save();
+  document.querySelectorAll('#filters button').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+  render();
+}
+$('#filters').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFilter(b.dataset.filter); });
+
+const searchEl = $('#search');
+searchEl.addEventListener('input', () => {
+  query = norm(searchEl.value.trim());
+  $('#clearSearch').classList.toggle('hidden', !searchEl.value);
+  render();
+});
+searchEl.addEventListener('keydown', e => { if (e.key === 'Enter') searchEl.blur(); });
+$('#clearSearch').addEventListener('click', () => { searchEl.value = ''; query = ''; $('#clearSearch').classList.add('hidden'); render(); searchEl.focus(); });
+
+const sortEl = $('#sort');
+sortEl.addEventListener('change', () => { state.sort = sortEl.value; save(); $('#sortWrap').classList.toggle('non-default', state.sort !== 'album'); render(); window.scrollTo({ top: 0 }); });
+
+/* ---------- compact header on scroll ---------- */
+const header = $('#header');
+new IntersectionObserver(([en]) => header.classList.toggle('scrolled', !en.isIntersecting), { rootMargin: '-1px 0px 0px 0px', threshold: 0 }).observe($('#sentinel'));
+
+/* ---------- settings sheet, backup, reset ---------- */
+const sheet = $('#sheet'), backdrop = $('#backdrop'), modal = $('#modal');
+function openSheet(){ sheet.classList.add('show'); backdrop.classList.add('show'); }
+function closeSheet(){ sheet.classList.remove('show'); if (!modal.classList.contains('show')) backdrop.classList.remove('show'); }
+$('#settingsBtn').addEventListener('click', openSheet);
+backdrop.addEventListener('click', () => { closeSheet(); closeModal(); });
+
+let modalResolve = null;
+function confirm2(title, text, okLabel, danger = true){
+  return new Promise(res => {
+    modalResolve = res;
+    $('#modalTitle').textContent = title;
+    $('#modalText').textContent = text;
+    const ok = $('#modalOk'); ok.textContent = okLabel; ok.className = danger ? 'danger' : 'primary';
+    backdrop.classList.add('show'); modal.classList.add('show');
+  });
+}
+function closeModal(result = false){ modal.classList.remove('show'); if (!sheet.classList.contains('show')) backdrop.classList.remove('show'); if (modalResolve) { modalResolve(result); modalResolve = null; } }
+$('#modalCancel').addEventListener('click', () => closeModal(false));
+$('#modalOk').addEventListener('click', () => closeModal(true));
+
+function backupJSON(){
+  return JSON.stringify({ app: 'wc26-sticker-tracker', version: 1, exportedAt: new Date().toISOString(), total: TOTAL, collectedCount: Object.keys(state.collected).length, collected: state.collected }, null, 2);
+}
+$('#exportBtn').addEventListener('click', () => {
+  const blob = new Blob([backupJSON()], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `wc26-stickers-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  closeSheet(); flash('Backup exported');
+});
+$('#copyBtn').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(backupJSON()); closeSheet(); flash('Backup copied to clipboard'); }
+  catch (e) { flash('Copy failed — use Export instead'); }
+});
+$('#importBtn').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', async e => {
+  const file = e.target.files && e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  let data;
+  try { data = JSON.parse(await file.text()); } catch (err) { flash('That file is not valid JSON'); return; }
+  const src = data && (data.collected || (data.app ? null : data));
+  if (!src || typeof src !== 'object') { flash('No sticker data found in file'); return; }
+  const next = {}; let unknown = 0;
+  for (const id in src) { if (TEAM_OF.has(id)) next[id] = typeof src[id] === 'number' ? src[id] : Date.now(); else unknown++; }
+  const n = Object.keys(next).length, cur = Object.keys(state.collected).length;
+  const ok = await confirm2('Restore backup?', `This replaces your current progress (${cur} collected) with the backup (${n} collected${unknown ? `, ${unknown} unknown IDs ignored` : ''}).`, 'Restore', false);
+  if (!ok) return;
+  state.collected = next; save(); closeSheet(); render(); flash(`Restored ${n} stickers`);
+});
+$('#resetBtn').addEventListener('click', async () => {
+  const cur = Object.keys(state.collected).length;
+  const ok = await confirm2('Reset collection?', `This permanently marks all ${TOTAL} stickers as missing. ${cur ? `You currently have ${cur} collected. ` : ''}Export a backup first if you want to keep it.`, 'Reset everything');
+  if (!ok) return;
+  state.collected = {}; lastAction = null; save(); closeSheet(); render(); flash('Collection reset');
+});
+function flash(msg){
+  $('#toastMsg').textContent = msg; lastAction = null;
+  $('#undoBtn').classList.add('hidden');
+  const toast = $('#toast'); toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.classList.remove('show'); setTimeout(() => $('#undoBtn').classList.remove('hidden'), 300); }, 2600);
+}
+/* ---------- boot ---------- */
+load();
+document.querySelectorAll('#filters button').forEach(b => b.classList.toggle('active', b.dataset.filter === state.filter));
+sortEl.value = state.sort; $('#sortWrap').classList.toggle('non-default', state.sort !== 'album');
+render();
+
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>

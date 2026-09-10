@@ -72,6 +72,15 @@ button{cursor:pointer;border:0;background:none;padding:0;margin:0}
 }
 .icon-btn:active{transform:scale(.92);background:var(--surface-3)}
 .icon-btn svg{width:18px;height:18px}
+.head-actions{display:flex;gap:8px;flex:none}
+.icon-btn.accent{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft)}
+.preview{
+  background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;
+  font-size:13px;line-height:1.5;color:var(--muted);white-space:pre-wrap;word-break:break-word;
+  max-height:34vh;overflow-y:auto;margin-bottom:12px;-webkit-overflow-scrolling:touch;
+}
+.menu button.primary{background:var(--text);color:#0a0a0c;border-color:transparent}
+.menu button.primary svg{color:#0a0a0c}
 
 .stats{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .stat-main{display:flex;align-items:baseline;gap:8px}
@@ -281,9 +290,14 @@ button{cursor:pointer;border:0;background:none;padding:0;margin:0}
           <p class="eyebrow">2026 World Cup</p>
           <h1 class="title">Sticker Tracker</h1>
         </div>
+        <div class="head-actions">
+        <button class="icon-btn accent" id="shareBtn" aria-label="Share missing list">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M7 8l5-5 5 5M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/></svg>
+        </button>
         <button class="icon-btn" id="settingsBtn" aria-label="Settings">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
         </button>
+        </div>
       </div>
     </div></div>
 
@@ -368,6 +382,27 @@ button{cursor:pointer;border:0;background:none;padding:0;margin:0}
     </button>
   </div>
   <div class="sheet-foot"><span id="footInfo"></span><span>v1.0</span></div>
+</div>
+
+<div class="sheet" id="shareSheet" role="dialog" aria-label="Share missing list">
+  <div class="grabber"></div>
+  <h2>Missing stickers</h2>
+  <p class="sub" id="shareSub"></p>
+  <div class="preview" id="sharePreview"></div>
+  <div class="menu">
+    <button id="shareNative" class="primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13M7 8l5-5 5 5M5 14v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5"/></svg>
+      <span>Share via Messages…</span>
+    </button>
+    <button id="shareCopy">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>
+      <span>Copy text</span>
+    </button>
+    <button id="shareTxt">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 17v3h16v-3"/></svg>
+      <span>Download as .txt</span><small>TXT</small>
+    </button>
+  </div>
 </div>
 
 <div class="modal" id="modal" role="alertdialog">
@@ -676,11 +711,53 @@ const header = $('#header');
 new IntersectionObserver(([en]) => header.classList.toggle('scrolled', !en.isIntersecting), { rootMargin: '-1px 0px 0px 0px', threshold: 0 }).observe($('#sentinel'));
 
 /* ---------- settings sheet, backup, reset ---------- */
-const sheet = $('#sheet'), backdrop = $('#backdrop'), modal = $('#modal');
-function openSheet(){ sheet.classList.add('show'); backdrop.classList.add('show'); }
-function closeSheet(){ sheet.classList.remove('show'); if (!modal.classList.contains('show')) backdrop.classList.remove('show'); }
-$('#settingsBtn').addEventListener('click', openSheet);
+const sheet = $('#sheet'), shareSheet = $('#shareSheet'), backdrop = $('#backdrop'), modal = $('#modal');
+function openSheet(el = sheet){ el.classList.add('show'); backdrop.classList.add('show'); }
+function closeSheet(){ sheet.classList.remove('show'); shareSheet.classList.remove('show'); if (!modal.classList.contains('show')) backdrop.classList.remove('show'); }
+$('#settingsBtn').addEventListener('click', () => openSheet(sheet));
 backdrop.addEventListener('click', () => { closeSheet(); closeModal(); });
+
+/* ---------- share the missing list (plain text, one line per team) ---------- */
+function missingListText(){
+  const lines = [];
+  let count = 0;
+  for (const t of TEAMS) {
+    const missing = t.ids.filter(id => !isOn(id));
+    if (!missing.length) continue;
+    count += missing.length;
+    lines.push(`${t.flag ? t.flag + ' ' : ''}${t.code}: ${missing.join(', ')}`);
+  }
+  const head = count ? `2026 World Cup album — ${count} sticker${count === 1 ? '' : 's'} I still need` : '2026 World Cup album — my list is complete!';
+  return `${head}\n\n${lines.join('\n')}`.trim();
+}
+function downloadText(name, text, type){
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+$('#shareBtn').addEventListener('click', () => {
+  const text = missingListText();
+  const remaining = TOTAL - Object.keys(state.collected).length;
+  $('#shareSub').textContent = remaining ? `${remaining} stickers, grouped by team. Ready to paste into a text message.` : 'Nothing missing. Your list is complete.';
+  $('#sharePreview').textContent = text;
+  $('#shareNative').classList.toggle('hidden', !navigator.share);
+  openSheet(shareSheet);
+});
+$('#shareNative').addEventListener('click', async () => {
+  try { await navigator.share({ title: 'Missing stickers', text: missingListText() }); closeSheet(); }
+  catch (e) { /* user dismissed the share sheet */ }
+});
+$('#shareCopy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(missingListText()); closeSheet(); flash('Missing list copied'); }
+  catch (e) { flash('Copy failed — long-press the text to select it'); }
+});
+$('#shareTxt').addEventListener('click', () => {
+  downloadText(`missing-stickers-${new Date().toISOString().slice(0, 10)}.txt`, missingListText(), 'text/plain');
+  closeSheet(); flash('Text file exported');
+});
 
 let modalResolve = null;
 function confirm2(title, text, okLabel, danger = true){
@@ -700,12 +777,7 @@ function backupJSON(){
   return JSON.stringify({ app: 'wc26-sticker-tracker', version: 1, exportedAt: new Date().toISOString(), total: TOTAL, collectedCount: Object.keys(state.collected).length, collected: state.collected }, null, 2);
 }
 $('#exportBtn').addEventListener('click', () => {
-  const blob = new Blob([backupJSON()], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `wc26-stickers-backup-${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  downloadText(`wc26-stickers-backup-${new Date().toISOString().slice(0, 10)}.json`, backupJSON(), 'application/json');
   closeSheet(); flash('Backup exported');
 });
 $('#copyBtn').addEventListener('click', async () => {

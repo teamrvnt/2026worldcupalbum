@@ -7,6 +7,7 @@ Tap a sticker when you get it. Progress is saved on the device automatically.
 - **Works offline** once opened (service worker).
 - **Installs to the iPhone Home Screen** like a native app.
 - **Persistent** via `localStorage`, with JSON export / import for backups.
+- **Share your missing list** as plain text: native iOS share sheet, clipboard, or a `.txt` download.
 
 ## Run it
 
